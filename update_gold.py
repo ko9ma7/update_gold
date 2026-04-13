@@ -6,7 +6,7 @@ from datetime import datetime
 try:
     print("⏳ Yahoo Finance에서 금시세(USD) 및 환율(KRW) 과거 데이터를 가져옵니다...")
     
-    # 국제 금 선물(GC=F) 및 달러/원 환율(USDKRW=X) 데이터 로드 (재작년 1월부터)
+    # 국제 금 선물(GC=F) 및 달러/원 환율(USDKRW=X) 데이터 로드 (재작년 1월부터).
     gold = yf.Ticker("GC=F")
     usdkrw = yf.Ticker("USDKRW=X")
 
