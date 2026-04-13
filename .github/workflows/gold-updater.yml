@@ -1,22 +1,27 @@
-# .github/workflows/gold-updater.yml
 name: Auto Update Gold Price
 
 on:
   schedule:
-    - cron: '0 0,6,12,18 * * *' # 매 6시간마다 실행 (UTC 기준)
-  workflow_dispatch: # 깃허브 웹에서 수동 클릭으로도 실행 가능하게 함
+    - cron: '30 0,6 * * *' # 한국시간 오전 9시 30분, 오후 3시 30분 실행
+  workflow_dispatch: # 수동 실행 버튼 활성화
+
+permissions:
+  contents: write # 봇이 파일을 덮어쓰고 푸시할 수 있는 필수 권한
 
 jobs:
   update-price:
     runs-on: ubuntu-latest
     steps:
       - name: 저장소 체크아웃
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # 최신 v4 사용 (Node 20 경고 해결)
 
       - name: Python 환경 세팅
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+
+      - name: 필수 라이브러리 설치 (yfinance, pandas)
+        run: pip install yfinance pandas
 
       - name: 금시세 스크래핑 파이썬 스크립트 실행
         run: python update_gold.py
@@ -26,5 +31,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add update.json
-          git commit -m "🤖 금시세 자동 업데이트 (update.json)" || echo "시세 변동 없음"
+          git commit -m "🤖 금시세 및 과거데이터 자동 업데이트" || echo "시세 변동 없음"
           git push
