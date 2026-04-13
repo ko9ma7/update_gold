@@ -1,20 +1,25 @@
 import yfinance as yf
 import pandas as pd
 import json
-from datetime import datetime
 
 try:
     print("⏳ Yahoo Finance에서 금시세(USD) 및 환율(KRW) 과거 데이터를 가져옵니다...")
     
-    # 국제 금 선물(GC=F) 및 달러/원 환율(USDKRW=X) 데이터 로드 (재작년 1월부터).
     gold = yf.Ticker("GC=F")
     usdkrw = yf.Ticker("USDKRW=X")
 
     df_gold = gold.history(start="2022-01-01")['Close'].rename('Gold_USD')
     df_krw = usdkrw.history(start="2022-01-01")['Close'].rename('USD_KRW')
 
-    # 두 데이터를 날짜 기준으로 병합
-    df = pd.concat([df_gold, df_krw], axis=1).dropna()
+    # [핵심 수정] 타임존(시간대) 정보 제거 및 순수 날짜(Date) 기준으로 정규화
+    df_gold.index = df_gold.index.tz_localize(None).normalize()
+    df_krw.index = df_krw.index.tz_localize(None).normalize()
+
+    # 데이터 병합: 휴장일이 달라 빈 값이 생기면 이전 날짜 값으로 채움(ffill)
+    df = pd.concat([df_gold, df_krw], axis=1).ffill().dropna()
+
+    if df.empty:
+        raise ValueError("병합된 데이터가 없습니다. API를 확인하세요.")
 
     # 1g당 원화 가격 계산 (1 트로이온스 = 31.1034768g)
     df['KRW_per_Gram'] = (df['Gold_USD'] * df['USD_KRW']) / 31.1034768
@@ -33,7 +38,7 @@ try:
         "status": "success",
         "latest_date": latest_date,
         "pgc": latest_price,
-        "history": history_dict, # 재작년부터의 모든 일자별 데이터가 여기에 담깁니다!
+        "history": history_dict,
         "source": "yfinance_github_bot"
     }
 
